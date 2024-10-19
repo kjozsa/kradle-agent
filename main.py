@@ -10,7 +10,7 @@ from tools.gradle_converter import KotlinConverterTool
 tools = [
     BuildScriptDiscoveryTool(),
     GradleExecutionTool(),
-    WriteFileTool(root_dir='.')
+    WriteFileTool(root_dir='.'),
     KotlinConverterTool()
 ]
 
