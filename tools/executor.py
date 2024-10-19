@@ -1,13 +1,14 @@
 import subprocess
 
 from langchain.tools import BaseTool
-
+from loguru import logger
 
 class GradleExecutionTool(BaseTool):
     name: str = "gradle_execution"
     description: str = "Executes Gradle build commands and returns the output"
 
     def _run(self, project_root: str, command: str = "build") -> str:
+        logger.info("input: {}", command)
         try:
             result = subprocess.run(
                 ["./gradlew", command],

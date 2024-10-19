@@ -1,16 +1,16 @@
 from langchain.agents import AgentExecutor, create_react_agent
 from langchain.prompts import ChatPromptTemplate
-from langchain_community.tools import WriteFileTool
 from langchain_ollama.llms import OllamaLLM
 
 from tools.discovery import BuildScriptDiscoveryTool
 from tools.executor import GradleExecutionTool
+from tools.file_writer import FileWriter
 from tools.gradle_converter import KotlinConverterTool
 
 tools = [
     BuildScriptDiscoveryTool(),
     GradleExecutionTool(),
-    WriteFileTool(root_dir='.'),
+    FileWriter(),
     KotlinConverterTool()
 ]
 
@@ -21,7 +21,9 @@ prompt = ChatPromptTemplate.from_messages([
     {tools}
 
     When specifying actions, use the exact tool name without any additional formatting or punctuation.
-    
+    When using the kotlin_converter_tool, only specify a single filename as the input.
+    When using the file_writer_tool, provide both the file_path and the full content to write as a single string, separated by a newline character.    
+
     Use the following format:
 
     Question: the input question you must answer
@@ -47,8 +49,8 @@ agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 result = agent_executor.invoke({"input": """Execute the following plan:
     1. Find the existing Gradle build scripts
     2. For each script in the list of scripts:
-    2a. Convert the script to Kotlin DSL
-    2b. Write the converted build script to the disk, to the original path
+    2a. Convert the single script to Kotlin DSL
+    2b. Write the converted build script to the disk, to the original path, but adding a .kts suffix to the filename
     3. Verify the build still executing successfully."""
 })
 print(result)
