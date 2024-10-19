@@ -1,0 +1,5 @@
+loguru
+langchain
+langchain-ollama
+langchain-tools
+langchain-community
