@@ -5,7 +5,7 @@ from pydantic import Field, BaseModel
 
 
 class KotlinConverterInput(BaseModel):
-    script: str = Field(..., description="The Groovy build script to convert to Kotlin DSL")
+    script: str = Field(..., description="path")
 
 
 class KotlinConverterTool(BaseTool):
@@ -15,8 +15,16 @@ class KotlinConverterTool(BaseTool):
     llm: OllamaLLM = Field(default_factory=lambda: OllamaLLM(model="llama3.1:8b", base_url="http://ai:11434/"))
 
     def _run(self, script: str) -> str:
-        logger.info("tool invoked with input: {}", script)
-        with open(script, 'r') as file:
+        logger.info("input: {}", script)
+
+        # input = self.llm.invoke(f"""return only the script path (including filename) of this input: {script}
+        #
+        # Return the path only, no comments or formatting.
+        # """)
+        # logger.info("sanitized input: {}", input)
+        input = script
+
+        with open(input, 'r') as file:
             content = file.read()
 
         prompt = f"""

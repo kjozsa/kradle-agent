@@ -9,7 +9,7 @@ class BuildScriptDiscoveryTool(BaseTool):
 
     def _run(self, _: str) -> str:
         build_files = []
-        project_root: str = f"{os.getcwd()}/../"
+        project_root: str = f"{os.getcwd()}"
         logger.debug("checking {}", project_root)
         for root, _, files in os.walk(project_root):
             for file in files:
