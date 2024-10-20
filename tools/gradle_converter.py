@@ -1,3 +1,5 @@
+import os
+
 from langchain.tools import BaseTool
 from langchain_ollama.llms import OllamaLLM
 from loguru import logger
@@ -43,5 +45,5 @@ class KotlinConverterTool(BaseTool):
 
 
 if (__name__ == '__main__'):
-    result = KotlinConverterTool()._run("/home/kjozsa/workspace/ai/hello-langchain-agent/../hello-langchain-agent/sample/demo/build.gradle")
+    result = KotlinConverterTool()._run(os.getcwd() + "/../sample/demo/build.gradle")
     logger.debug("result: {}", result)
