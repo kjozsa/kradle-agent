@@ -7,20 +7,17 @@ from pydantic import BaseModel, Field
 
 
 class FileWriterInput(BaseModel):
-    file_path_and_content: str = Field(..., description="path\ncontent")
+    file_path_and_contents: str = Field(..., description="absolute path")
 
 
 class FileWriter(BaseTool):
     name: str = "file_writer_tool"
-    description: str = "Write content to a file at the specified path"
+    description: str = """file_path, a newline character and then the contents of the file"""
     args_schema: type[BaseModel] = FileWriterInput
 
     def _run(self, input: str) -> str:
         logger.info("input: {}", input)
-        split = input.split("\n")
-        file_path: str = split[0]
-        content: list[str] = split[1:]
-        logger.debug("writing content to {}: {}", file_path, content)
+        file_path, content = input.split("\n", 1)
 
         try:
             with Path(file_path).open("w", encoding="utf-8") as f:
@@ -35,6 +32,46 @@ class FileWriter(BaseTool):
 
 
 if __name__ == "__main__":
-    FileWriter()._run(
-        os.getcwd() + "/../sample/demo/build.gradle.kts\n" +
-        """buildscript {\n    repositories {\n        mavenCentral()\n    }\n    dependencies {\n        classpath("io.spring.gradle:dependency-management-plugin:1.1.6")\n        classpath("org.springframework.boot:spring-boot-gradle-plugin:3.3.4")\n    }\n}\n\nplugins {\n    id(\"java\")\n    id(\"org.springframework.boot\") version \"3.3.4\"\n    id(\"io.spring.dependency-management\") version \"1.1.6\"\n}\n\n group = \"com.example\"\nversion = \"0.0.1-SNAPSHOT\"\n\n java {\n    toolchain {\n        languageVersion = JavaLanguageVersion.of(21)\n    }\n}\n\n repositories {\n    mavenCentral()\n}\n\n dependencies {\n    implementation(\"org.springframework.boot:spring-boot-starter-actuator\")\n    implementation(\"org.springframework.boot:spring-boot-starter-web\")\n    implementation(\"org.apache.camel.springboot:camel-spring-boot-starter:4.8.0\")\n    testImplementation(\"org.springframework.boot:spring-boot-starter-test\")\n    testRuntimeOnly(\"org.junit.platform:junit-platform-launcher\")\n}\ntasks.named(\"test\") {\n    useJUnitPlatform()\n}\n""")
+    file_path = os.path.join(os.getcwd(), "../sample/demo/build.gradle.kts")
+    input = file_path + """\n
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("io.spring.gradle:dependency-management-plugin:1.1.6")
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:3.3.4")
+    }
+}
+
+plugins {
+    id("java")
+    id("org.springframework.boot") version "3.3.4"
+    id("io.spring.dependency-management") version "1.1.6"
+}
+
+group = "com.example"
+version = "0.0.1-SNAPSHOT"
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.apache.camel.springboot:camel-spring-boot-starter:4.8.0")
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+tasks.named("test") {
+    useJUnitPlatform()
+}
+"""
+    FileWriter()._run(input)

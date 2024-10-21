@@ -1,5 +1,6 @@
 from langchain.agents import AgentExecutor, create_react_agent
 from langchain.prompts import ChatPromptTemplate
+from langchain_core.prompts import SystemMessagePromptTemplate, HumanMessagePromptTemplate
 from langchain_ollama.llms import OllamaLLM
 
 from tools.discovery import BuildScriptDiscoveryTool
@@ -7,9 +8,9 @@ from tools.executor import GradleExecutionTool
 from tools.file_writer import FileWriter
 from tools.kotlin_converter import KotlinConverterTool
 
-# llm = OllamaLLM(model="llama3.1:8b", base_url="http://ai:11434/", temperature=0)
-# llm = OllamaLLM(model="gemma2:9b", base_url="http://ai:11434/", temperature=0)
-llm = OllamaLLM(model="mistral-nemo:12b", base_url="http://ai:11434/", temperature=0)
+llm = OllamaLLM(model="llama3.1:8b", base_url="http://ai:11434/", temperature=0.5)
+# llm = OllamaLLM(model="gemma2:9b", base_url="http://ai:11434/", temperature=0.5)
+# llm = OllamaLLM(model="mistral-nemo:12b", base_url="http://ai:11434/", temperature=0.3)
 
 tools = [
     BuildScriptDiscoveryTool(),
@@ -24,14 +25,29 @@ prompt = ChatPromptTemplate.from_messages([
     You have access to the following tools:
     {tools}
 
-    When specifying actions, use the exact tool name without any additional formatting or punctuation.
-    When using the kotlin_converter_tool, only specify a single filename as the input.
-    When using the file_writer_tool, provide a single string with the file_path, a newline character, and then the full content to write.  
-    When using the gradle_execution tool, provide the absolute path of the converted kotlin build script to the tool as the input. 
+    Instructions:
+    1. When specifying actions, use the exact tool name without any additional formatting or punctuation.
+    2. For kotlin_converter_tool:
+       - Provide only the absolute file path of the script to convert.
+       - Do not include any explanations, comments, or parentheses.
+       - The input should be a single line containing only the file path.
+       - Example correct input: "/home/user/project/build.gradle"
+       - Example incorrect input: "/path/to/build.gradle (the path to the discovered Gradle build script)"
+    3. For file_writer_tool:
+       - Provide a single string as input.
+       - Format the string as follows:
+         <file_path>
+         <file_contents>
+       - The file path and contents must be separated by exactly one newline character (\n).
+       - Do not include any additional newlines, spaces, or separators.
+       - Example input:
+         /path/to/file.txt
+         This is the content of the file.  
+    4. When using the gradle_tool tool, provide the absolute path of the converted kotlin build script to the tool as the input. 
 
     Use the following format:
     Question: the input question you must answer
-    Thought: you should always think about what to do
+    Thought: you should ALWAYS think about what to do
     Action: the action to take, should be one of [{tool_names}]
     Action Input: the input to the action without any comments in parentheses
     Observation: the result of the action
@@ -44,15 +60,67 @@ prompt = ChatPromptTemplate.from_messages([
     """)
 ])
 
+# prompt = ChatPromptTemplate.from_messages([
+#     SystemMessagePromptTemplate.from_template("""
+#     You are an AI assistant specialized in managing Gradle builds and converting Groovy builds to Kotlin DSL format.
+#
+#     You have access to the following tools:
+#     {tools}
+#
+#     Instructions:
+#     1. Use exact tool names without additional formatting: {tool_names}
+#     2. For kotlin_converter_tool: Provide the absolute path of the script to convert.
+#     3. For file_writer_tool:
+#        - Provide a single string as input.
+#        - Format the string as follows:
+#          <file_path>
+#          <file_contents>
+#        - The file path and contents must be separated by exactly one newline character (\n).
+#        - Do not include any additional newlines, spaces, or separators.
+#        - Example input:
+#          /path/to/file.txt
+#          This is the content of the file.
+#     4. For gradle_tool: Provide the absolute path of the converted Kotlin build script.
+#
+#     Follow this format strictly:
+#     Question: <input question>
+#     Thought: <your reasoning>
+#     Action: <tool name>
+#     Action Input: <tool input>
+#     Observation: <tool output>
+#     ... (repeat Thought/Action/Action Input/Observation as needed)
+#     Thought: I now know the final answer
+#     Final Answer: <your conclusion>
+#
+#     Begin your analysis:
+#     Thought:{agent_scratchpad}
+#     """),
+#     HumanMessagePromptTemplate.from_template("{input}")
+# ])
+
 agent = create_react_agent(llm, tools, prompt)
-agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
-result = agent_executor.invoke({
-    "input": """Execute the following plan step by step:
-    1. Find the existing Gradle build scripts
-    2. For each script in the list of scripts:
-    2a. Convert the single script to Kotlin DSL
-    2b. Write the converted build script to the disk, to the original path, but adding a '.kts' suffix to the filename
-    3. Execute the build with the 'gradle_execution' tool, to verify that it still succeeds.
+agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True, handle_parse_errors=True)
+result = agent_executor.invoke({"input": """
+    Convert Gradle build scripts from Groovy to Kotlin DSL and verify the build. Follow these steps precisely:
+
+    1. Discover build scripts:
+       - Use the build_script_discovery tool to find all Gradle build scripts in the project.
+
+    2. Convert and save each script:
+       - For each discovered script:
+         a. Use the kotlin_converter_tool to convert the script to Kotlin DSL.
+         b. Use the file_writer_tool to save the converted script:
+            - Use the original path but append '.kts' to the filename.
+            - Example: '/path/to/build.gradle' becomes '/path/to/build.gradle.kts'
+
+    3. Verify the build:
+       - Use the gradle_tool to execute the build with the converted scripts.
+       - Analyze the output to confirm the build succeeds.
+
+    4. Report results:
+       - Provide a summary of converted files and the build outcome.
+
+    Execute these steps sequentially and report your progress after each major step.
     """
-})
+                                })
 print(result)

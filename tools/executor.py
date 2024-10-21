@@ -11,7 +11,7 @@ class GradleExecutionInput(BaseModel):
 
 
 class GradleExecutionTool(BaseTool):
-    name: str = "gradle_execution"
+    name: str = "gradle_tool"
     description: str = "Executes Gradle build commands using the specified kotlin build file and returns the output"
     args_schema: type[BaseModel] = GradleExecutionInput
 
