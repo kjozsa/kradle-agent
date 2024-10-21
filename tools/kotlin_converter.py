@@ -1,4 +1,5 @@
 import os
+from typing import Any
 
 from langchain.tools import BaseTool
 from langchain_ollama.llms import OllamaLLM
@@ -7,14 +8,18 @@ from pydantic import Field, BaseModel
 
 
 class KotlinConverterInput(BaseModel):
-    script: str = Field(..., description="path")
+    script: str = Field(..., description="absolute path of the file")
 
 
 class KotlinConverterTool(BaseTool):
-    name: str = "kotlin_converter"
+    name: str = "kotlin_converter_tool"
     description: str = "Converts Gradle build scripts from Groovy to Kotlin DSL"
     args_schema: type[BaseModel] = KotlinConverterInput
-    llm: OllamaLLM = Field(default_factory=lambda: OllamaLLM(model="llama3.1:8b", base_url="http://ai:11434/"))
+    llm: OllamaLLM = None
+
+    def __init__(self, llm, **kwargs: Any):
+        super().__init__(**kwargs)
+        self.llm = llm
 
     def _run(self, script: str) -> str:
         logger.info("input: {}", script)

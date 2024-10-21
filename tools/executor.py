@@ -1,18 +1,29 @@
+import os.path
 import subprocess
 
 from langchain.tools import BaseTool
 from loguru import logger
+from pydantic import BaseModel, Field
+
+
+class GradleExecutionInput(BaseModel):
+    build_file: str = Field(..., description="absolute path")
+
 
 class GradleExecutionTool(BaseTool):
     name: str = "gradle_execution"
-    description: str = "Executes Gradle build commands and returns the output"
+    description: str = "Executes Gradle build commands using the specified kotlin build file and returns the output"
+    args_schema: type[BaseModel] = GradleExecutionInput
 
-    def _run(self, project_root: str, command: str = "build") -> str:
-        logger.info("input: {}", command)
+    def _run(self, build_file: str) -> str:
+        logger.info("input: {}", build_file)
+        path = os.path.dirname(build_file)
+        logger.debug("executing build in dir {}", path)
+
         try:
             result = subprocess.run(
-                ["./gradlew", command],
-                cwd=project_root,
+                "./gradlew -b build.gradle.kts build",
+                cwd=path,
                 capture_output=True,
                 text=True,
                 check=True

@@ -26,7 +26,7 @@ class FileWriter(BaseTool):
             with Path(file_path).open("w", encoding="utf-8") as f:
                 for line in content:
                     f.write(f"{line}\n")
-            return f"File written successfully to {file_path}."
+            return f"Success."
         except Exception as e:
             return "Error: " + str(e)
 
