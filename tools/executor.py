@@ -22,7 +22,7 @@ class GradleExecutionTool(BaseTool):
 
         try:
             result = subprocess.run(
-                "./gradlew -b build.gradle.kts build",
+                ["./gradlew", "-b", "build.gradle.kts", "build"],
                 cwd=path,
                 capture_output=True,
                 text=True,

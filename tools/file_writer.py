@@ -20,9 +20,8 @@ class FileWriter(BaseTool):
         file_path, content = input.split("\n", 1)
 
         try:
-            with Path(file_path).open("w", encoding="utf-8") as f:
-                for line in content:
-                    f.write(f"{line}\n")
+            with Path(file_path.strip()).open("w", encoding="utf-8") as f:
+                f.write(content)
             return f"Success."
         except Exception as e:
             return "Error: " + str(e)

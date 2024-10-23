@@ -1,14 +1,16 @@
+from dotenv import load_dotenv
 from langchain.agents import AgentExecutor, create_react_agent
 from langchain.prompts import ChatPromptTemplate
-from langchain_core.prompts import SystemMessagePromptTemplate, HumanMessagePromptTemplate
-from langchain_ollama.llms import OllamaLLM
+from langchain_openai import ChatOpenAI
 
 from tools.discovery import BuildScriptDiscoveryTool
 from tools.executor import GradleExecutionTool
 from tools.file_writer import FileWriter
 from tools.kotlin_converter import KotlinConverterTool
 
-llm = OllamaLLM(model="llama3.1:8b", base_url="http://ai:11434/", temperature=0.5)
+load_dotenv()
+llm = ChatOpenAI(model="gpt-4o-mini")
+# llm = OllamaLLM(model="llama3.1:8b", base_url="http://ai:11434/", temperature=0.5)
 # llm = OllamaLLM(model="gemma2:9b", base_url="http://ai:11434/", temperature=0.5)
 # llm = OllamaLLM(model="mistral-nemo:12b", base_url="http://ai:11434/", temperature=0.3)
 

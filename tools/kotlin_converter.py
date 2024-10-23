@@ -39,7 +39,7 @@ class KotlinConverterTool(BaseTool):
 
         {content}
 
-        Provide only the converted Kotlin DSL script without any explanations or formatting like backticks.
+        Provide only the converted Kotlin DSL script without any explanations or formatting like backticks. Also apply any cleanups and optimizations, as necessary.
         """
 
         logger.debug("invoking converter: {}", prompt)
